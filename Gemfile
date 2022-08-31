@@ -14,6 +14,20 @@ gem "puma", "~> 5.0"
 
 gem 'securerandom'
 
+# RestClient
+gem 'rest-client'
+# Jobs
+gem 'daemons' 
+gem 'delayed_job_active_record'
+
+gem 'nokogiri'
+gem 'rexml'
+
+gem 'pry'
+gem 'pry-rescue'
+gem 'pry-stack_explorer'
+gem 'pry-doc'
+
 # Build JSON APIs with ease [https://github.com/rails/jbuilder]
 # gem "jbuilder"
 
