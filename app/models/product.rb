@@ -41,31 +41,38 @@ class Product < ApplicationRecord
   def self.send_tray!(access_token)
     products = Product.where(active: "S")
     products.each do |product|
-      
-      binding.pry
-      
       if product.id_tray.present?
-        url = "#{ENV['API_ADDRESS']}/products/#{product.id_tray}?access_token=#{access_token}"
-        body = Product.payload_tray!(product)
         begin
-          response = RestClient.put url, body.to_json, { accept: :json, content_type: :json }
+          url = URI("#{ENV['API_ADDRESS']}/products/#{product.id_tray}?access_token=#{access_token}")
+          https = Net::HTTP.new(url.host, url.port)
+          https.use_ssl = true
+          request = Net::HTTP::Put.new(url)
+          request["Content-Type"] = "application/json"
+          request.body = Product.request_body!(product)
+          response = https.request(request)
+          
+          if response.code == 200
+            puts "Produto ID_TRAY: #{product.id_tray} atualizado na Tray"
+          else
+            puts "[ERROR] -> Erro ao atualizar Produto ID_TRAY: #{product.id_tray} na Tray. Response: #{response.code} - #{response.body}"
+          end
         rescue Exception => e
           puts "Não possível atualizar o produto (ID: #{product.id_tray}) na Tray. Erro: #{e.message}"
         end
       else
         begin
+          url = URI("#{ENV['API_ADDRESS']}/products?access_token=#{access_token}")
+          https = Net::HTTP.new(url.host, url.port)
+          https.use_ssl = true
+          request = Net::HTTP::Post.new(url)
+          request["Content-Type"] = "application/json"
+          request.body = Product.request_body!(product)
+          response = https.request(request)
           
-          binding.pry
-          
-          url = "#{ENV['API_ADDRESS']}/products?access_token=#{access_token}"
-          body = Product.payload_tray!(product)
-          
-          binding.pry
-          
-          response = RestClient.post url, body.to_json, { accept: :json, content_type: :json }
           if response.code == 200 || response.code == 201
             hash = JSON.parse(response.body)
             product.update_column(:id_tray, hash["id"])
+            puts "Produto ID_TRAY: #{product.id_tray} criado na Tray"
           end
         rescue Exception => e
           puts "Erro ao enviar produto (SKU: #{product.sku}) para a Tray: #{e.message}"
@@ -74,8 +81,8 @@ class Product < ApplicationRecord
     end
   end
 
-  def self.payload_tray!(product)    
-    body = {
+  def self.request_body!(product)  
+    JSON.dump({
       "Product":  {
         "name": product.name,
         "ncm": product.ncm,
@@ -92,8 +99,6 @@ class Product < ApplicationRecord
         "category_id": "888954448",
         "available": 1
       }
-    }
+    })
   end
-    
-  
 end

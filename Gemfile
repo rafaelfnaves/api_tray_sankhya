@@ -16,6 +16,8 @@ gem 'securerandom'
 
 # RestClient
 gem 'rest-client'
+gem 'net-http'
+
 # Jobs
 gem 'daemons' 
 gem 'delayed_job_active_record'
