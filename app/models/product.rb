@@ -61,17 +61,26 @@ class Product < ApplicationRecord
         end
       else
         begin
+          puts "Cadastro de produtos:."
+          puts "(POST): #{ENV['API_ADDRESS']}/products?access_token=#{access_token}"
+
           url = URI("#{ENV['API_ADDRESS']}/products?access_token=#{access_token}")
           https = Net::HTTP.new(url.host, url.port)
           https.use_ssl = true
           request = Net::HTTP::Post.new(url)
           request["Content-Type"] = "application/json"
           request.body = Product.request_body!(product)
+          puts "Corpo da requisição: #{request.body}"
+
           response = https.request(request)
-          
+          puts "Response: #{response}"
+          puts "Status: #{response.code}"
+          puts "Corpo da resposta: #{response.body}"
           if response.code == 200 || response.code == 201
+            puts "Status: #{response.code}"
             hash = JSON.parse(response.body)
-            product.update_column(:id_tray, hash["id"])
+            product.id_tray = hash["id"]
+            product.save!
             puts "Produto ID_TRAY: #{product.id_tray} criado na Tray"
           end
         rescue Exception => e
