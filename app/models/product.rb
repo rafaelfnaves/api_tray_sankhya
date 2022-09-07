@@ -105,7 +105,7 @@ class Product < ApplicationRecord
         "width": product.width,
         "height": product.height,
         "stock": product.stock,
-        "category_id": "888954448",
+        "category_id": "35",
         "available": 1
       }
     })
