@@ -1,0 +1,47 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  cnpj: MyString
+  id_tray: MyString
+  name: MyString
+  rg: MyString
+  cpf: MyString
+  phone: MyString
+  cellphone: MyString
+  email: MyString
+  token: MyString
+  company_name: MyString
+  state_inscription: MyString
+  discount: MyString
+  blocked_tray: MyString
+  profile_customer_id: MyString
+  address: MyString
+  zip_code: MyString
+  number_address: MyString
+  complement: MyString
+  neighborhood: MyString
+  city: MyString
+  state: MyString
+
+two:
+  cnpj: MyString
+  id_tray: MyString
+  name: MyString
+  rg: MyString
+  cpf: MyString
+  phone: MyString
+  cellphone: MyString
+  email: MyString
+  token: MyString
+  company_name: MyString
+  state_inscription: MyString
+  discount: MyString
+  blocked_tray: MyString
+  profile_customer_id: MyString
+  address: MyString
+  zip_code: MyString
+  number_address: MyString
+  complement: MyString
+  neighborhood: MyString
+  city: MyString
+  state: MyString

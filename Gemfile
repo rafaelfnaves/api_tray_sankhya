@@ -14,6 +14,8 @@ gem "puma", "~> 5.0"
 
 gem 'securerandom'
 
+gem 'whenever', require: false
+
 # RestClient
 gem 'rest-client'
 gem 'net-http'

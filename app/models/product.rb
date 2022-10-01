@@ -39,7 +39,7 @@ class Product < ApplicationRecord
   end
 
   def self.send_tray!(access_token)
-    products = Product.where(active: "S")
+    products = Product.all
     products.each do |product|
       if product.id_tray.present?
         begin
@@ -61,27 +61,18 @@ class Product < ApplicationRecord
         end
       else
         begin
-          puts "Cadastro de produtos:."
-          puts "(POST): #{ENV['API_ADDRESS']}/products?access_token=#{access_token}"
-
           url = URI("#{ENV['API_ADDRESS']}/products?access_token=#{access_token}")
           https = Net::HTTP.new(url.host, url.port)
           https.use_ssl = true
           request = Net::HTTP::Post.new(url)
           request["Content-Type"] = "application/json"
           request.body = Product.request_body!(product)
-          puts "Corpo da requisição: #{request.body}"
 
           response = https.request(request)
-          puts "Response: #{response}"
-          puts "Status: #{response.code}"
-          puts "Corpo da resposta: #{response.body}"
           if response.code == 200 || response.code == 201
-            puts "Status: #{response.code}"
             hash = JSON.parse(response.body)
             product.id_tray = hash["id"]
             product.save!
-            puts "Produto ID_TRAY: #{product.id_tray} criado na Tray"
           end
         rescue Exception => e
           puts "Erro ao enviar produto (SKU: #{product.sku}) para a Tray: #{e.message}"
@@ -90,7 +81,7 @@ class Product < ApplicationRecord
     end
   end
 
-  def self.request_body!(product)  
+  def self.request_body!(product)
     JSON.dump({
       "Product":  {
         "name": product.name,
@@ -106,8 +97,66 @@ class Product < ApplicationRecord
         "height": product.height,
         "stock": product.stock,
         "category_id": "35",
-        "available": 1
+        "available": product.active == "S" ? 1 : 0
       }
     })
   end
+
+  def self.login_snk!(url)
+    body = {
+      "serviceName": "MobileLoginSP.login",
+      "requestBody": {
+        "NOMUSU": {
+          "$": ENV['NOMUSU']
+        },
+        "INTERNO":{
+          "$": ENV['INTERNO']
+        },
+        "KEEPCONNECTED": {
+            "$": "S"
+        }
+      }
+    }
+
+    begin
+      response = RestClient::Request.execute(
+        method:  :get,
+        url: url,
+        payload: body.to_json,
+        headers: { content_type: 'application/json', accept: 'application/json'}  
+      )
+    rescue Exception => e
+      puts "Erro ao efetuar login SNK: #{e}"
+    end
+
+    response
+  end
+
+  def self.view_snk!(view_name, jsessionid)
+    url = ENV["VIEW_URL_SNK"]
+    body = "
+      <serviceRequest serviceName='CRUDServiceProvider.loadView'> <requestBody>
+      <query viewName= '#{view_name}'>
+      </query>
+      </requestBody> </serviceRequest>
+    "
+
+    begin
+      response = RestClient::Request.execute(
+        method:  :post,
+        url: url,
+        payload: body,
+        headers: { content_type: 'text/xml;charset=ISO-8859-1', cookie: "JSESSIONID=#{jsessionid}"}
+      )
+
+      hash = Hash.from_xml(response.body)
+      products = hash["serviceResponse"]["responseBody"]["records"]["record"]
+    rescue Exception => e
+      puts "Erro ao consultar view de produtos: #{e}"
+    end
+    
+    products
+  end
+  
+  
 end

@@ -3,58 +3,44 @@ namespace :snk do
   task create_products: :environment do
     puts "Start snk:products"
 
-    url_login = ENV["LOGIN_URL_SNK"]
-    body_login = {
-      "serviceName": "MobileLoginSP.login",
-      "requestBody": {
-        "NOMUSU": {
-          "$": "LJ.INTEGRA"
-        },
-        "INTERNO":{
-          "$": "studio@5512"
-        },
-        "KEEPCONNECTED": {
-            "$": "S"
-        }
-      }
-    }
-
-    response = RestClient::Request.execute(
-      method:  :get,   
-      url: url_login,  
-      payload: body_login.to_json,  
-      headers: { content_type: 'application/json', accept: 'application/json'}  
-    ) 
+    response = Product.login_snk!(ENV["LOGIN_URL_SNK"])
     if response.code == 200
       hash = JSON.parse(response.body)
       begin
         jsessionid = hash["responseBody"]["jsessionid"]["$"]
-        url_complete_view = ENV["VIEW_URL_SNK"]
-        body_complete_view = '
-          <serviceRequest serviceName="CRUDServiceProvider.loadView"> <requestBody>
-          <query viewName= "VGFSLL">
-          </query>
-          </requestBody> </serviceRequest>
-        '
-        begin
-          response = RestClient::Request.execute(
-            method:  :post,
-            url: url_complete_view,
-            payload: body_complete_view,
-            headers: { content_type: 'text/xml;charset=ISO-8859-1', cookie: "JSESSIONID=#{jsessionid}"}
-          )
-
-          hash = Hash.from_xml(response.body)
-          products = hash["serviceResponse"]["responseBody"]["records"]["record"]
-          Product.save_product!(products)
-        rescue Exception => e
-          puts "Erro ao consultar view de produtos: #{e}"
-        end
+        products = Product.view_snk!("VGFSLL", jsessionid)
+        Product.save_product!(products)
       rescue Exception => e
-        puts "Erro ao obter jsessionid"
+        puts "Erro ao salvar produtos."
       end
     end
 
     puts "End snk:products"
+  end
+
+  desc "Get price and stock on SNK VIEW"
+  task stock_price: :environment do
+    puts "Start snk:stock_price"
+
+    response = Product.login_snk!(ENV["LOGIN_URL_SNK"])
+    if response.code == 200
+      hash = JSON.parse(response.body)
+      begin
+        jsessionid = hash["responseBody"]["jsessionid"]["$"]
+        products = Product.view_snk!("VGFESTPRICE", jsessionid)
+        for item in products
+          product = Product.find_by_sku(item["sku"])
+          unless product.nil?
+            product.update_column(:active, item["ativo"])
+            product.update_column(:stock, item["estoque_quantidade"].nil? ? nil : item["estoque_quantidade"].to_i)
+            product.update_column(:price, item["preco_cheio"].to_f)
+          end
+        end
+      rescue Exception => e
+        puts "Erro ao atualizar Estoque e Preço do produto: #{e}"
+      end
+    end
+    
+    puts "End snk:stock_price"
   end
 end
