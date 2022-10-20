@@ -3,7 +3,7 @@ namespace :snk do
   task create_products: :environment do
     puts "Start snk:products"
 
-    jsessionid = Product.login_snk!()
+    jsessionid = Auth.access_token!()
     begin
       products = Product.view_snk!("VGFSLL", jsessionid)
       Product.save_product!(products)
@@ -18,23 +18,19 @@ namespace :snk do
   task stock_price: :environment do
     puts "Start snk:stock_price"
 
-    response = Product.login_snk!(ENV["LOGIN_URL_SNK"])
-    if response.code == 200
-      hash = JSON.parse(response.body)
-      begin
-        jsessionid = hash["responseBody"]["jsessionid"]["$"]
-        products = Product.view_snk!("VGFESTPRICE", jsessionid)
-        for item in products
-          product = Product.find_by_sku(item["sku"])
-          unless product.nil?
-            product.update_column(:active, item["ativo"])
-            product.update_column(:stock, item["estoque_quantidade"].nil? ? nil : item["estoque_quantidade"].to_i)
-            product.update_column(:price, item["preco_cheio"].to_f)
-          end
+    begin
+      jsessionid = Auth.access_token!()
+      products = Product.view_snk!("VGFESTPRICE", jsessionid)
+      for item in products
+        product = Product.find_by_sku(item["sku"])
+        unless product.nil?
+          product.update_column(:active, item["ativo"])
+          product.update_column(:stock, item["estoque_quantidade"].nil? ? nil : item["estoque_quantidade"].to_i)
+          product.update_column(:price, item["preco_cheio"].to_f)
         end
-      rescue Exception => e
-        puts "Erro ao atualizar Estoque e Preço do produto: #{e}"
       end
+    rescue Exception => e
+      puts "Erro ao atualizar Estoque e Preço do produto: #{e}"
     end
     
     puts "End snk:stock_price"
