@@ -1,5 +1,5 @@
 set :application, "api_tray_sankhya"
-set :repo_url, "git@github.com:rafaelfnaves/api_tray_sankhya.git"
+set :repo_url, "git@bitbucket.org:rfnaves/api_tray_sankhya.git"
 set :user, 'deploy'
 set :puma_threads, [4, 16]
 set :puma_workers, 0
