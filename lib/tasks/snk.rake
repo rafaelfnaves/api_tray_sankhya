@@ -3,16 +3,12 @@ namespace :snk do
   task create_products: :environment do
     puts "Start snk:products"
 
-    response = Product.login_snk!(ENV["LOGIN_URL_SNK"])
-    if response.code == 200
-      hash = JSON.parse(response.body)
-      begin
-        jsessionid = hash["responseBody"]["jsessionid"]["$"]
-        products = Product.view_snk!("VGFSLL", jsessionid)
-        Product.save_product!(products)
-      rescue Exception => e
-        puts "Erro ao salvar produtos."
-      end
+    jsessionid = Product.login_snk!()
+    begin
+      products = Product.view_snk!("VGFSLL", jsessionid)
+      Product.save_product!(products)
+    rescue Exception => e
+      puts "Erro ao salvar produtos."
     end
 
     puts "End snk:products"

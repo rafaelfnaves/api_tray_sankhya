@@ -1,0 +1,17 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  name: MyString
+  state: MyString
+  codcid: 1
+  coduf: 1
+  codmunfis: 1
+  codmunsiafi: 1
+
+two:
+  name: MyString
+  state: MyString
+  codcid: 1
+  coduf: 1
+  codmunfis: 1
+  codmunsiafi: 1

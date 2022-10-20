@@ -6,14 +6,12 @@ class HooksController < ApplicationController
     
     begin
       puts "parametros: #{params}"
-      puts "NOME: #{params["scope_name"]}"
-      puts "ID do ESCOPO: #{params["scope_id"]}"
-      puts "ID SELLER: #{params["seller_id"]}"
-      # data = JSON.parse(params)
-      # puts "parse json: #{data}"
+      if params["scope_name"] == "order"
+        Order.get_order!(params["scope_id"])
+      end
       
     rescue Exception => e
-      puts "Error on webhook, order_callback: #{e}"
+      puts "Error on webhook, order_callback: #{e.message}, parameters: #{params}"
       # Honeybadger.notify("Error on Webhook: #{e.message}")
     end
     

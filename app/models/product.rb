@@ -84,6 +84,7 @@ class Product < ApplicationRecord
   def self.request_body!(product)
     JSON.dump({
       "Product":  {
+        "ean": product.sku,
         "name": product.name,
         "ncm": product.ncm,
         "description": product.description,
@@ -100,36 +101,6 @@ class Product < ApplicationRecord
         "available": product.active == "S" ? 1 : 0
       }
     })
-  end
-
-  def self.login_snk!(url)
-    body = {
-      "serviceName": "MobileLoginSP.login",
-      "requestBody": {
-        "NOMUSU": {
-          "$": ENV['NOMUSU']
-        },
-        "INTERNO":{
-          "$": ENV['INTERNO']
-        },
-        "KEEPCONNECTED": {
-            "$": "S"
-        }
-      }
-    }
-
-    begin
-      response = RestClient::Request.execute(
-        method:  :get,
-        url: url,
-        payload: body.to_json,
-        headers: { content_type: 'application/json', accept: 'application/json'}  
-      )
-    rescue Exception => e
-      puts "Erro ao efetuar login SNK: #{e}"
-    end
-
-    response
   end
 
   def self.view_snk!(view_name, jsessionid)

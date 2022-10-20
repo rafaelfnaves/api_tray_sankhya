@@ -1,0 +1,21 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  invoice: MyString
+  date: MyString
+  code_type_operation: MyString
+  type_deal: MyString
+  code_salesman: MyString
+  code_company: MyString
+  type_move: MyString
+  customer: one
+
+two:
+  invoice: MyString
+  date: MyString
+  code_type_operation: MyString
+  type_deal: MyString
+  code_salesman: MyString
+  code_company: MyString
+  type_move: MyString
+  customer: two

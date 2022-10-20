@@ -27,6 +27,8 @@ gem 'delayed_job_active_record'
 gem 'nokogiri'
 gem 'rexml'
 
+gem "roo", "~> 2.9.0"
+
 gem 'pry'
 gem 'pry-rescue'
 gem 'pry-stack_explorer'

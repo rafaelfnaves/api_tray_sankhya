@@ -10,10 +10,21 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2022_10_01_020701) do
+ActiveRecord::Schema[7.0].define(version: 2022_10_15_121815) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
+
+  create_table "cities", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "name"
+    t.string "state"
+    t.integer "codcid"
+    t.integer "coduf"
+    t.integer "codmunfis"
+    t.integer "codmunsiafi"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
 
   create_table "customers", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "cnpj"
@@ -39,6 +50,26 @@ ActiveRecord::Schema[7.0].define(version: 2022_10_01_020701) do
     t.string "state"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "code_par_snk"
+  end
+
+  create_table "orders", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "invoice"
+    t.string "date"
+    t.string "code_type_operation"
+    t.string "type_deal"
+    t.string "code_salesman"
+    t.string "code_company"
+    t.string "type_move"
+    t.uuid "customer_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "total"
+    t.date "payment_date"
+    t.string "product_id_tray"
+    t.string "id_tray"
+    t.string "nu_nota"
+    t.index ["customer_id"], name: "index_orders_on_customer_id"
   end
 
   create_table "products", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -60,4 +91,5 @@ ActiveRecord::Schema[7.0].define(version: 2022_10_01_020701) do
     t.string "id_tray"
   end
 
+  add_foreign_key "orders", "customers"
 end

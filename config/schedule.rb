@@ -24,7 +24,7 @@ every 8.hours do
   rake "snk:create_products"
 end
 
-every 2.minute do
+every 2.minutes do
   rake 'snk:stock_price'
 end
 
