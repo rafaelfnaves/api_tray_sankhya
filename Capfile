@@ -44,3 +44,10 @@ Dir.glob("lib/capistrano/tasks/*.rake").each { |r| import r }
 
 set :rbenv_type, :user
 set :rbenv_ruby, '3.1.2'
+
+set :ssh_options, {
+  user: 'deploy',
+  keys: ['~/.ssh/id_rsa'],
+  forward_agent: true,
+  auth_methods: ["publickey"]
+}

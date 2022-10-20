@@ -1,5 +1,9 @@
 set :application, "api_tray_sankhya"
 set :repo_url, "git@github.com:rafaelfnaves/api_tray_sankhya.git"
+set :user, 'deploy'
+set :puma_threads, [4, 16]
+set :puma_workers, 0
+set :stage, :production
 
 # Deploy to the user's home directory
 set :deploy_to, "/home/deploy/#{fetch :application}"
