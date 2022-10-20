@@ -1,5 +1,5 @@
 set :application, "api_tray_sankhya"
-set :repo_url, "git@github.com:rafaelfnaves/apit_tray_snk.git"
+set :repo_url, "git@github.com:rafaelfnaves/api_tray_sankhya.git"
 
 # Deploy to the user's home directory
 set :deploy_to, "/home/deploy/#{fetch :application}"
