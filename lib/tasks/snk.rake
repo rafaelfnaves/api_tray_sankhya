@@ -3,12 +3,12 @@ namespace :snk do
   task create_products: :environment do
     puts "Start snk:products"
 
-    jsessionid = Auth.access_token!()
     begin
+      jsessionid = Auth.jsessionid!()
       products = Product.view_snk!("VGFSLL", jsessionid)
       Product.save_product!(products)
     rescue Exception => e
-      puts "Erro ao salvar produtos."
+      puts "Erro ao salvar produtos: #{e.message}"
     end
 
     puts "End snk:products"
@@ -19,7 +19,7 @@ namespace :snk do
     puts "Start snk:stock_price"
 
     begin
-      jsessionid = Auth.access_token!()
+      jsessionid = Auth.jsessionid!()
       products = Product.view_snk!("VGFESTPRICE", jsessionid)
       for item in products
         product = Product.find_by_sku(item["sku"])
