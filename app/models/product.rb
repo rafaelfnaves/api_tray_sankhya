@@ -43,6 +43,8 @@ class Product < ApplicationRecord
     products.each do |product|
       if product.id_tray.present?
         begin
+          sleep 5
+          
           url = URI("#{ENV['API_ADDRESS']}/products/#{product.id_tray}?access_token=#{access_token}")
           https = Net::HTTP.new(url.host, url.port)
           https.use_ssl = true
@@ -61,6 +63,8 @@ class Product < ApplicationRecord
         end
       else
         begin
+          sleep 5
+          
           url = URI("#{ENV['API_ADDRESS']}/products?access_token=#{access_token}")
           https = Net::HTTP.new(url.host, url.port)
           https.use_ssl = true
