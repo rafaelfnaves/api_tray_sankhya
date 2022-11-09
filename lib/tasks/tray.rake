@@ -7,6 +7,7 @@ namespace :tray do
     rescue Exception => e
       puts "Error: #{response.code} => {#{response.body}}"
     end
+    Rails.logger.info "Task tray:create_products done."
   end
 
   desc "Busca os produtos cadastrados na Tray"
@@ -16,12 +17,12 @@ namespace :tray do
     hash = JSON.parse(response.body)
     prds = []
     hash["Products"].each do |product|
-      i = Product.find_by_name(product["Product"]["name"])
+      i = Product.find_by_sku(product["Product"]["ean"])
       unless i.nil?
         i.update_column(:id_tray, product["Product"]["id"])
         prds << i.id_tray
       end
     end
-    puts prds
+    puts prds.count
   end
 end

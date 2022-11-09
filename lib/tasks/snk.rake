@@ -11,6 +11,7 @@ namespace :snk do
       puts "Erro ao salvar produtos: #{e.message}"
     end
 
+    Rails.logger.info "Task snk:create_products done."
     puts "End snk:products"
   end
 
@@ -32,7 +33,7 @@ namespace :snk do
     rescue Exception => e
       puts "Erro ao atualizar Estoque e Preço do produto: #{e}"
     end
-    
+    Rails.logger.info "Task snk:stock_price done."
     puts "End snk:stock_price"
   end
 end
