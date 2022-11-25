@@ -2,11 +2,15 @@ class Order < ApplicationRecord
    belongs_to :customer
 
    def self.get_order!(id_tray)
+      Rails.logger.info "Entrou get_order"
    
       token = Auth.access_token!()
       url = "#{ENV['API_ADDRESS']}/orders/#{id_tray}/complete?access_token=#{token}"
+      Rails.logger.info "URL: #{url}"
       response = RestClient.get url
       hash = JSON.parse(response.body)
+
+      Rails.logger.info "Response: #{response.code} - #{response.body}"
 
       order = hash["Order"]
       if order["has_payment"] == "1"
@@ -24,7 +28,7 @@ class Order < ApplicationRecord
                "NUNOTA":{
                },
                "CODPROD":{
-                   "$": "2014".to_i
+                   "$": product.sku.to_i
                },
                "QTDNEG":{
                    "$": pr_sold["ProductsSold"]["quantity"].to_f
@@ -33,7 +37,7 @@ class Order < ApplicationRecord
                    "$":"20100".to_i
                },
                "CODVOL":{
-                   "$":"UN"
+                   "$": product.volume
                },
                "VLRUNIT":{
                    "$": pr_sold["ProductsSold"]["price"].to_f

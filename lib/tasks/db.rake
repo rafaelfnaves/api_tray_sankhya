@@ -21,4 +21,16 @@ namespace :db do
 
     puts "End db:create_cities"
   end
+
+  task weight_product: :environment do
+    products = Product.where(weight: 0)
+    products.each do |i|
+      i.update_column(:weight, 1)
+    end
+  end
+
+  task update_products: :environment do
+    Rake::Task["snk:create_products"].invoke
+    Rake::Task["db:weight_product"].invoke
+  end
 end

@@ -16,10 +16,11 @@ class Product < ApplicationRecord
           description: product["descricao_completa"],
           stock: product["estoque_quantidade"].nil? ? nil : product["estoque_quantidade"].to_i,
           brand: product["marca"],
-          weight: product["peso_em_kg"].nil? || product["peso_em_kg"] == 0 ? 1 : product["peso_em_kg"].to_i,
+          weight: product["peso_em_kg"].nil? || product["peso_em_kg"] == 0 || product["peso_em_kg"] == "0" || product["peso_em_kg"].blank? ? 1 : product["peso_em_kg"].to_i,
           height: product["altura_em_cm"].nil? ? nil : product["altura_em_cm"].to_i,
           width: product["largura_em_cm"].nil? ? nil : product["largura_em_cm"].to_i,
-          length: product["comprimento_em_cm"].nil? ? nil : product["comprimento_em_cm"].to_i
+          length: product["comprimento_em_cm"].nil? ? nil : product["comprimento_em_cm"].to_i,
+          volume: product["codvol"]
         )
       else
         data.update_column(:active, product["ativo"])
@@ -29,20 +30,23 @@ class Product < ApplicationRecord
         data.update_column(:name, product["nome"])
         data.update_column(:description, product["descricao_completa"])
         data.update_column(:stock, product["estoque_quantidade"].nil? ? nil : product["estoque_quantidade"].to_i)
-        data.update_column(:brand, product["marca"],)
-        data.update_column(:weight, product["peso_em_kg"].nil? || product["peso_em_kg"] == 0 ? 1 : product["peso_em_kg"].to_i)
+        data.update_column(:brand, product["marca"])
+        data.update_column(:weight, product["peso_em_kg"].nil? || product["peso_em_kg"] == 0 || product["peso_em_kg"] == "0" || product["peso_em_kg"].blank? ? 1 : product["peso_em_kg"].to_i)
         data.update_column(:height, product["altura_em_cm"].nil? ? nil : product["altura_em_cm"].to_i)
         data.update_column(:width, product["largura_em_cm"].nil? ? nil : product["largura_em_cm"].to_i)
         data.update_column(:length, product["comprimento_em_cm"].nil? ? nil : product["comprimento_em_cm"].to_i)
+        data.update_column(:volume, product["codvol"])
       end
     end
   end
 
-  def self.send_tray!(access_token)
+  def self.send_tray!
     products = Product.all
     products.each do |product|
 
-      sleep 3
+      sleep 2
+      
+      access_token = Auth.access_token!()
       
       if product.id_tray.present?
         begin
@@ -55,7 +59,7 @@ class Product < ApplicationRecord
           request.body = Product.request_body!(product)
           response = https.request(request)
           
-          if response.code == 200
+          if response.code == 200 || response.code == "200"
             puts "Produto ID_TRAY: #{product.id_tray} atualizado na Tray"
           else
             puts "[ERROR] -> Erro ao atualizar Produto ID_TRAY: #{product.id_tray} na Tray. Response: #{response.code} - #{response.body}"
@@ -100,7 +104,7 @@ class Product < ApplicationRecord
         "width": product.width,
         "height": product.height,
         "stock": product.stock,
-        "category_id": "35",
+        "category_id": product.category.nil? ? "35" : product.category,
         "available": product.active == "S" ? 1 : 0
       }
     })

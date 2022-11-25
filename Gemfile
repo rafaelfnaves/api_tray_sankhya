@@ -28,6 +28,7 @@ gem 'nokogiri'
 gem 'rexml'
 
 gem "roo", "~> 2.9.0"
+gem 'roo-xls'
 
 gem 'pry'
 gem 'pry-rescue'
