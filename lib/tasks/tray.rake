@@ -71,5 +71,42 @@ namespace :tray do
       puts count
     end
   end
+
+  desc "Get orders on tray"
+  task get_orders: :environment do
+    puts "Start task tray:get_orders"
+
+    begin
+      today = Date.today.to_s
+      
+      url = "#{ENV['API_ADDRESS']}/orders?access_token=#{Auth.access_token!()}&has_payment=1&date=#{today}"
+      
+      response = RestClient.get url
+      
+      hash = JSON.parse(response.body)
+      
+      unless hash["paging"]["total"] == 0
+        pages = (hash["paging"]["total"].to_f / hash["paging"]["limit"].to_f).ceil # round to UP
+        page_now = 1
+
+        while page_now <= pages
+          
+          url = "#{ENV['API_ADDRESS']}/orders?access_token=#{Auth.access_token!()}&has_payment=1&date=#{today}&page=#{page_now}"
+          response = RestClient.get url
+          hash = JSON.parse(response.body)
+          hash["Orders"].each do |i|
+            Order.get_order!(i["Order"]["id"])
+          end
+          
+          page_now += 1
+        end
+      end
+    rescue Exception => error
+      puts "Error task for consult today orders on tray. Time: #{Time.now}, Error: #{error.message}"
+      Rails.logger.info "Error task for consult today orders on tray. Time: #{Time.now}, Error: #{error.message}"
+    end
+
+    puts "End task tray:get_orders"
+  end
 end
 
