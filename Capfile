@@ -51,3 +51,4 @@ set :ssh_options, {
   forward_agent: true,
   auth_methods: ["publickey"]
 }
+require 'capistrano/honeybadger'

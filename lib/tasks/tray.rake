@@ -5,7 +5,8 @@ namespace :tray do
       # Save or Update products in Tray
       Product.send_tray!
     rescue Exception => e
-      puts "Error: #{response.code} => {#{response.body}}"
+      puts "Error create products on tray: #{e.message}"
+      Honeybadger.notify("Error create products on tray: #{e.message}")
     end
     Rails.logger.info "Task tray:create_products done."
   end
@@ -29,6 +30,7 @@ namespace :tray do
           Rails.logger.info "Task tray:get_products ok. id_tray: #{i.id_tray} | category: #{i.category}"
         rescue Exception => e
           puts "Erro ao consultar produto id: #{i.id} - ERROR #{e.message}"
+          Honeybadger.notify("Erro ao consultar produto id: #{i.id} - ERROR #{e.message}")
 
           Rails.logger.info "Task tray:get_products error. id_tray: #{i.id_tray} | category: #{i.category}"
         end
@@ -103,6 +105,7 @@ namespace :tray do
       end
     rescue Exception => error
       puts "Error task for consult today orders on tray. Time: #{Time.now}, Error: #{error.message}"
+      Honeybadger.notify("Error task for consult today orders on tray. Time: #{Time.now}, Error: #{error.message}")
       Rails.logger.info "Error task for consult today orders on tray. Time: #{Time.now}, Error: #{error.message}"
     end
 

@@ -66,6 +66,7 @@ class Product < ApplicationRecord
           end
         rescue Exception => e
           puts "Não possível atualizar o produto (ID: #{product.id_tray}) na Tray. Erro: #{e.message}"
+          Honeybadger.notify("Não possível atualizar o produto (ID: #{product.id_tray}) na Tray. Erro: #{e.message}")
         end
       else
         begin
@@ -83,6 +84,7 @@ class Product < ApplicationRecord
           product.save!
         rescue Exception => e
           puts "Erro ao enviar produto (SKU: #{product.sku}) para a Tray: #{e.message}"
+          Honeybadger.notify("Erro ao enviar produto (SKU: #{product.sku}) para a Tray: #{e.message}")
         end
       end
     end
@@ -131,6 +133,7 @@ class Product < ApplicationRecord
       products = hash["serviceResponse"]["responseBody"]["records"]["record"]
     rescue Exception => e
       puts "Erro ao consultar view de produtos: #{e}"
+      Honeybadger.notify("Erro ao consultar view de produtos: #{e.message}")
     end
     
     products

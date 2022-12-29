@@ -9,6 +9,7 @@ namespace :snk do
       Product.save_product!(products)
     rescue Exception => e
       puts "Erro ao salvar produtos: #{e.message}"
+      Honeybadger.notify("Erro ao salvar produtos: #{e.message}")
     end
 
     Rails.logger.info "Task snk:create_products done."
@@ -32,6 +33,7 @@ namespace :snk do
       end
     rescue Exception => e
       puts "Erro ao atualizar Estoque e Preço do produto: #{e}"
+      Honeybadger.notify("Erro ao atualizar Estoque e Preço do produto: #{e.message}")
     end
     Rails.logger.info "Task snk:stock_price done."
     puts "End snk:stock_price"

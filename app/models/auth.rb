@@ -34,6 +34,7 @@ class Auth < ApplicationRecord
       jsessionid = hash["responseBody"]["jsessionid"]["$"]
     rescue Exception => e
       puts "Erro ao efetuar login SNK: #{e}"
+      Honeybadger.notify("Erro ao efetuar login SNK: #{e.message}")
     end
 
     jsessionid
