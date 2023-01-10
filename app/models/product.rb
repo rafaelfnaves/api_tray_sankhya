@@ -6,7 +6,7 @@ class Product < ApplicationRecord
     products.each do |product|      
       data = Product.find_by_sku(product["sku"])
       if data.nil?
-        self.create!(
+        product = self.create!(
           sku: product["sku"], 
           active: product["ativo"], 
           price: product["preco_cheio"].to_f,
@@ -22,6 +22,8 @@ class Product < ApplicationRecord
           length: product["comprimento_em_cm"].nil? ? nil : product["comprimento_em_cm"].to_i,
           volume: product["codvol"]
         )
+
+        Product.create_tray!(product)
       else
         data.update_column(:active, product["ativo"])
         data.update_column(:price, product["preco_cheio"].to_f)
@@ -36,59 +38,116 @@ class Product < ApplicationRecord
         data.update_column(:width, product["largura_em_cm"].nil? ? nil : product["largura_em_cm"].to_i)
         data.update_column(:length, product["comprimento_em_cm"].nil? ? nil : product["comprimento_em_cm"].to_i)
         data.update_column(:volume, product["codvol"])
+
+        Product.get_tray!(data.id)
+        Product.update_tray!(data.id)
       end
     end
   end
 
-  def self.send_tray!
-    products = Product.all
-    products.each do |product|
-
-      sleep 2
-      
+  def self.create_tray!(product)
+    sleep 2
+    
+    begin
       access_token = Auth.access_token!()
       
-      if product.id_tray.present?
-        begin
-          
-          url = URI("#{ENV['API_ADDRESS']}/products/#{product.id_tray}?access_token=#{access_token}")
-          https = Net::HTTP.new(url.host, url.port)
-          https.use_ssl = true
-          request = Net::HTTP::Put.new(url)
-          request["Content-Type"] = "application/json"
-          request.body = Product.request_body!(product)
-          response = https.request(request)
-          
-          if response.code == 200 || response.code == "200"
-            puts "Produto ID_TRAY: #{product.id_tray} atualizado na Tray"
-          else
-            puts "[ERROR] -> Erro ao atualizar Produto ID_TRAY: #{product.id_tray} na Tray. Response: #{response.code} - #{response.body}"
-          end
-        rescue Exception => e
-          puts "Não possível atualizar o produto (ID: #{product.id_tray}) na Tray. Erro: #{e.message}"
-          Honeybadger.notify("Não possível atualizar o produto (ID: #{product.id_tray}) na Tray. Erro: #{e.message}")
-        end
-      else
-        begin
-          url = URI("#{ENV['API_ADDRESS']}/products?access_token=#{access_token}")
-          https = Net::HTTP.new(url.host, url.port)
-          https.use_ssl = true
-          request = Net::HTTP::Post.new(url)
-          request["Content-Type"] = "application/json"
-          request.body = Product.request_body!(product)
-          
-          response = https.request(request)
-          hash = JSON.parse(response.body)
-          
-          product.id_tray = hash["id"]
-          product.save!
-        rescue Exception => e
-          puts "Erro ao enviar produto (SKU: #{product.sku}) para a Tray: #{e.message}"
-          Honeybadger.notify("Erro ao enviar produto (SKU: #{product.sku}) para a Tray: #{e.message}")
-        end
-      end
+      url = URI("#{ENV['API_ADDRESS']}/products?access_token=#{access_token}")
+      https = Net::HTTP.new(url.host, url.port)
+      https.use_ssl = true
+      request = Net::HTTP::Post.new(url)
+      request["Content-Type"] = "application/json"
+      request.body = Product.request_body!(product)
+      
+      response = https.request(request)
+      hash = JSON.parse(response.body)
+      
+      product.id_tray = hash["id"]
+      product.save!
+
+      puts "Produto (SKU: #{product.sku}) Criado na Tray."
+    rescue Exception => e
+      puts "Erro ao enviar produto (SKU: #{product.sku}) para a Tray: #{e.message}"
+      Honeybadger.notify("Erro ao enviar produto (SKU: #{product.sku}) para a Tray: #{e.message}")
     end
   end
+
+  # Get info product on tray
+  def self.get_tray!(id)
+    product = Product.find(id)
+    
+    begin
+      url = "#{ENV['API_ADDRESS']}/products"
+      response = RestClient.get url, {params: {'ean' => product.sku.to_s}}
+      hash = JSON.parse(response.body)
+
+      hash_product = hash["Products"].first["Product"]
+      product.id_tray = hash_product["id"]
+      product.category = hash_product["category_id"]
+      product.save!
+
+      puts "Atualizado produto - id_tray: #{product.id_tray} | category: #{product.category}"
+      Rails.logger.info "Task tray:get_products ok. id_tray: #{product.id_tray} | category: #{product.category}"
+    rescue Exception => e
+      puts "Erro ao consultar produto SKU: #{product.sku} - ERROR #{e.message}"
+      Honeybadger.notify("Erro ao consultar produto SKU: #{product.sku} - ERROR #{e.message}")
+    end
+  end
+  
+
+  def self.update_tray!(id)
+    product = Product.find(id)
+
+    sleep 2
+
+    begin
+      access_token = Auth.access_token!()
+      url = URI("#{ENV['API_ADDRESS']}/products/#{product.id_tray}?access_token=#{access_token}")
+      https = Net::HTTP.new(url.host, url.port)
+      https.use_ssl = true
+      request = Net::HTTP::Put.new(url)
+      request["Content-Type"] = "application/json"
+      request.body = Product.request_body!(product)
+      response = https.request(request)
+      
+      if response.code == 200 || response.code == "200"
+        puts "Produto ID_TRAY: #{product.id_tray} atualizado na Tray"
+      else
+        puts "[ERROR] -> Erro ao atualizar Produto ID_TRAY: #{product.id_tray} na Tray. Response: #{response.code} - #{response.body}"
+      end
+    rescue Exception => e
+      puts "Não possível atualizar o produto (ID: #{product.id_tray}) na Tray. Erro: #{e.message}"
+      Honeybadger.notify("Não possível atualizar o produto (ID: #{product.id_tray}) na Tray. Erro: #{e.message}")
+    end
+  end
+  
+
+  def self.stock_price_tray!(product)
+    sleep 2
+    
+    product = Product.find(id)
+
+    access_token = Auth.access_token!()
+
+    url = URI("#{ENV['API_ADDRESS']}/products/#{product.id_tray}?access_token=#{access_token}")
+    https = Net::HTTP.new(url.host, url.port)
+    https.use_ssl = true
+    request = Net::HTTP::Put.new(url)
+    request["Content-Type"] = "application/json"
+    request.body = JSON.dump({
+      "Product": {
+        "price": product.price,
+        "stock": product.stock,
+      }
+    }
+    response = https.request(request)
+    
+    if response.code == 200 || response.code == "200"
+      puts "Produto ID_TRAY: #{product.id_tray} atualizado na Tray"
+    else
+      puts "[ERROR] -> Erro ao atualizar Produto ID_TRAY: #{product.id_tray} na Tray. Response: #{response.code} - #{response.body}"
+    end
+  end
+  
 
   def self.request_body!(product)
     JSON.dump({

@@ -16,6 +16,8 @@ namespace :tray do
     Product.all.each do |i|
       unless i.sku.nil?
         begin
+          sleep 2
+          
           url = "#{ENV['API_ADDRESS']}/products"
           response = RestClient.get url, {params: {'ean' => i.sku.to_s}}
           hash = JSON.parse(response.body)

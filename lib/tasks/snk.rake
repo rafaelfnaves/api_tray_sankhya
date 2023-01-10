@@ -29,6 +29,11 @@ namespace :snk do
           product.update_column(:active, item["ativo"])
           product.update_column(:stock, item["estoque_quantidade"].nil? ? nil : item["estoque_quantidade"].to_i)
           product.update_column(:price, item["preco_cheio"].to_f)
+          begin
+            Product.stock_price_tray!(product.id)
+          rescue Exception => e
+            Honeybadger.notify("Erro ao atualizar Estoque e Preço do produto SKU #{product.sku} na Tray: #{e.message}")        
+          end
         end
       end
     rescue Exception => e
