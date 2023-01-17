@@ -19,7 +19,7 @@ namespace :tray do
           sleep 2
           
           url = "#{ENV['API_ADDRESS']}/products"
-          response = RestClient.get url, {params: {'ean' => i.sku.to_s}}
+          response = RestClient.get url, {params: {'reference' => i.sku.to_s}}
           hash = JSON.parse(response.body)
 
           product = hash["Products"].first["Product"]

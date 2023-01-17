@@ -18,7 +18,7 @@ namespace :snk do
 
   desc "Get price and stock on SNK VIEW"
   task stock_price: :environment do
-    puts "Start snk:stock_price"
+    puts "Start snk:stock_price - #{Time.now}"
 
     begin
       jsessionid = Auth.jsessionid!()
@@ -41,6 +41,6 @@ namespace :snk do
       Honeybadger.notify("Erro ao atualizar Estoque e Preço do produto: #{e.message}")
     end
     Rails.logger.info "Task snk:stock_price done."
-    puts "End snk:stock_price"
+    puts "End snk:stock_price  - #{Time.now}"
   end
 end

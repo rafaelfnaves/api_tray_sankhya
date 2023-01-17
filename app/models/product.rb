@@ -77,7 +77,7 @@ class Product < ApplicationRecord
     
     begin
       url = "#{ENV['API_ADDRESS']}/products"
-      response = RestClient.get url, {params: {'ean' => product.sku.to_s}}
+      response = RestClient.get url, {params: {'reference' => product.sku.to_s}}
       hash = JSON.parse(response.body)
 
       hash_product = hash["Products"].first["Product"]
@@ -121,7 +121,7 @@ class Product < ApplicationRecord
   end
   
 
-  def self.stock_price_tray!(product)
+  def self.stock_price_tray!(id)
     sleep 2
     
     product = Product.find(id)
@@ -138,7 +138,7 @@ class Product < ApplicationRecord
         "price": product.price,
         "stock": product.stock,
       }
-    }
+    })
     response = https.request(request)
     
     if response.code == 200 || response.code == "200"
@@ -152,7 +152,7 @@ class Product < ApplicationRecord
   def self.request_body!(product)
     JSON.dump({
       "Product":  {
-        "ean": product.sku,
+        "reference": product.sku,
         "name": product.name,
         "ncm": product.ncm,
         "description": product.description,
