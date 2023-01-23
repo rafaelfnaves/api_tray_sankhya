@@ -97,7 +97,7 @@ class Product < ApplicationRecord
   def self.update_tray!(id)
     product = Product.find(id)
 
-    sleep 2
+    sleep 1
 
     begin
       access_token = Auth.access_token!()
@@ -122,8 +122,8 @@ class Product < ApplicationRecord
   
 
   def self.stock_price_tray!(id)
-    sleep 2
-    
+    sleep 1
+
     product = Product.find(id)
 
     access_token = Auth.access_token!()
@@ -153,6 +153,7 @@ class Product < ApplicationRecord
     JSON.dump({
       "Product":  {
         "reference": product.sku,
+        "ean": "",
         "name": product.name,
         "ncm": product.ncm,
         "description": product.description,
