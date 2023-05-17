@@ -1,0 +1,18 @@
+databases:
+  - name: api_tray_sankhya
+    databaseName: api_tray_sankhya
+    user: api_tray_sankhya
+
+services:
+  - type: web
+    name: api_tray_sankhya
+    env: ruby
+    buildCommand: "./bin/render-build.sh"
+    startCommand: "bundle exec puma -C config/puma.rb"
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: api_tray_sankhya
+          property: connectionString
+      - key: RAILS_MASTER_KEY
+        sync: false
