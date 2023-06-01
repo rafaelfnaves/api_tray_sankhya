@@ -11,3 +11,7 @@ end
 every 7.minutes do
   rake 'tray:update_products'
 end
+
+every 10.minutes do
+  rake 'tray:get_orders'
+end
