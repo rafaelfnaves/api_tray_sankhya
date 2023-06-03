@@ -8,6 +8,7 @@ Bundler.require(*Rails.groups)
 
 module ApiTraySankhya
   class Application < Rails::Application
+    config.hosts << "apitraysankhya-production.up.railway.app"
     # Initialize configuration defaults for originally generated Rails version.
     config.load_defaults 7.0
 
