@@ -23,7 +23,7 @@ class Product < ApplicationRecord
           volume: product["codvol"]
         )
 
-        Product.create_tray!(product)
+        # Product.create_tray!(product)
       else
         data.update_column(:active, product["ativo"])
         data.update_column(:price, product["preco_cheio"].to_f)
