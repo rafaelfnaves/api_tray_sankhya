@@ -3,7 +3,7 @@ namespace :tray do
   task create_products: :environment do
     begin
       # Save or Update products in Tray
-      Product.send_tray!
+      Product.create_tray!
     rescue Exception => e
       puts "Error create products on tray: #{e.message}"
       Honeybadger.notify("Error create products on tray: #{e.message}")
