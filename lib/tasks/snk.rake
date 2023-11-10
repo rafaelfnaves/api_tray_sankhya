@@ -9,7 +9,6 @@ namespace :snk do
       Product.save_product!(products)
     rescue Exception => e
       puts "Erro ao salvar produtos: #{e.message}"
-      Honeybadger.notify("Erro ao salvar produtos: #{e.message}")
     end
 
     Rails.logger.info "Task snk:create_products done."
@@ -29,18 +28,14 @@ namespace :snk do
           product.update_column(:active, item["ativo"])
           product.update_column(:stock, item["estoque_quantidade"].nil? ? nil : item["estoque_quantidade"].to_i)
           product.update_column(:price, item["preco_cheio"].to_f)
-          begin
-            Product.stock_price_tray!(product.id)
-          rescue Exception => e
-            Honeybadger.notify("Erro ao atualizar Estoque e Preço do produto SKU #{product.sku} na Tray: #{e.message}")        
-          end
+
+          Product.stock_price_tray!(product)
         end
       end
     rescue Exception => e
-      puts "Erro ao atualizar Estoque e Preço do produto: #{e}"
-      Honeybadger.notify("Erro ao atualizar Estoque e Preço do produto: #{e.message}")
+      puts "Erro ao atualizar Estoque e Preço do produto: #{e.message}"
+      Rails.logger.info "Erro ao atualizar Estoque e Preço do produto: #{e.message}"
     end
-    Rails.logger.info "Task snk:stock_price done."
     puts "End snk:stock_price  - #{Time.now}"
   end
 end

@@ -23,7 +23,12 @@ class Product < ApplicationRecord
           volume: product["codvol"]
         )
 
-        Product.create_tray!(product)
+        if product
+          result = Product.get_tray!(product)
+          unless result[:status] == "OK"
+            Product.create_tray!(product)
+          end
+        end
       else
         data.update_column(:active, product["ativo"])
         data.update_column(:price, product["preco_cheio"].to_f)
@@ -39,8 +44,8 @@ class Product < ApplicationRecord
         data.update_column(:length, product["comprimento_em_cm"].nil? ? nil : product["comprimento_em_cm"].to_i)
         data.update_column(:volume, product["codvol"])
 
-        Product.get_tray!(data.id)
-        Product.update_tray!(data.id)
+        result = Product.get_tray!(data)
+        Product.update_tray!(data) if result[:status] == "OK"
       end
     end
   end
@@ -72,31 +77,34 @@ class Product < ApplicationRecord
   end
 
   # Get info product on tray
-  def self.get_tray!(id)
-    product = Product.find(id)
-    
+  def self.get_tray!(product)
     begin
       url = "#{ENV['API_ADDRESS']}/products"
       response = RestClient.get url, {params: {'reference' => product.sku.to_s}}
-      hash = JSON.parse(response.body)
+    rescue Exception => e
+      puts "Erro ao consultar produto SKU: #{product.sku} - ERROR #{e.message}"
+      Rails.logger.info "[ERROR] Product.get_tray!. product id: #{id}"
+    end
 
-      hash_product = hash["Products"].first["Product"]
-      product.id_tray = hash_product["id"]
-      product.category = hash_product["category_id"]
+    hash = JSON.parse(response.body)
+
+    if hash["Products"].empty?
+      { status: "not found" }
+    else
+      hash_product = hash.dig('Products', 0, 'Product')
+      product.id_tray = hash_product['id']
+      product.category = hash_product['category_id']
       product.save!
 
       puts "Atualizado produto - id_tray: #{product.id_tray} | category: #{product.category}"
-      Rails.logger.info "Task tray:get_products ok. id_tray: #{product.id_tray} | category: #{product.category}"
-    rescue Exception => e
-      puts "Erro ao consultar produto SKU: #{product.sku} - ERROR #{e.message}"
-      Honeybadger.notify("Erro ao consultar produto SKU: #{product.sku} - ERROR #{e.message}")
+      Rails.logger.info "[SUCCESS] get_tray!. id_tray: #{product.id_tray} | category: #{product.category}"
+      
+      { status: "OK" }
     end
   end
   
 
-  def self.update_tray!(id)
-    product = Product.find(id)
-
+  def self.update_tray!(product)
     sleep 1
 
     begin
@@ -111,23 +119,21 @@ class Product < ApplicationRecord
       
       if response.code == 200 || response.code == "200"
         puts "Produto ID_TRAY: #{product.id_tray} atualizado na Tray"
+        Rails.logger.info "[SUCCESS] update_tray! ID_TRAY: #{product.id_tray} | sku: #{product.sku}"
       else
-        puts "[ERROR] -> Erro ao atualizar Produto ID_TRAY: #{product.id_tray} na Tray. Response: #{response.code} - #{response.body}"
+        raise "Error update_tray: Response code was #{response.code} and body #{response.body}"
       end
     rescue Exception => e
-      puts "Não possível atualizar o produto (ID: #{product.id_tray}) na Tray. Erro: #{e.message}"
-      Honeybadger.notify("Não possível atualizar o produto (ID: #{product.id_tray}) na Tray. Erro: #{e.message}")
+      puts "[ERROR] update_tray! ID_TRAY: #{product.id_tray}. Error message: #{e.message}"
+      Rails.logger.info "[ERROR] #{e.message}"
     end
   end
   
 
-  def self.stock_price_tray!(id)
+  def self.stock_price_tray!(product)
     sleep 1
 
-    product = Product.find(id)
-
     access_token = Auth.access_token!()
-
     url = URI("#{ENV['API_ADDRESS']}/products/#{product.id_tray}?access_token=#{access_token}")
     https = Net::HTTP.new(url.host, url.port)
     https.use_ssl = true
@@ -139,12 +145,18 @@ class Product < ApplicationRecord
         "stock": product.stock,
       }
     })
-    response = https.request(request)
-    
-    if response.code == 200 || response.code == "200"
-      puts "Produto ID_TRAY: #{product.id_tray} atualizado na Tray"
-    else
-      puts "[ERROR] -> Erro ao atualizar Produto ID_TRAY: #{product.id_tray} na Tray. Response: #{response.code} - #{response.body}"
+
+    begin
+      response = https.request(request)
+      if response.code == 200 || response.code == "200"
+        puts "[SUCCESS] Update stock_price_tray. ID_TRAY: #{product.id_tray}"
+        Rails.logger.info "[SUCCESS] Update stock_price_tray. ID_TRAY: #{product.id_tray}"
+      else
+        raise "Error on Update stock_price_tray. ID_TRAY: #{product.id_tray} SKU: #{product.sku}. Response: #{response.code} - #{response.body}"
+      end
+    rescue Exception => e
+      puts "[ERROR] #{e.message}"
+      Rails.logger.info "[ERROR] #{e.message}"
     end
   end
   
@@ -190,13 +202,11 @@ class Product < ApplicationRecord
       )
 
       hash = Hash.from_xml(response.body)
-      products = hash["serviceResponse"]["responseBody"]["records"]["record"]
+      hash.dig('serviceResponse', 'responseBody', 'records', 'record')
     rescue Exception => e
-      puts "Erro ao consultar view de produtos: #{e}"
-      Honeybadger.notify("Erro ao consultar view de produtos: #{e.message}")
+      puts "[ERROR] view_snk. Error message: #{e.message}"
+      Rails.logger.info "[ERROR] view_snk. Error message: #{e.message}"
     end
-    
-    products
   end
   
   
