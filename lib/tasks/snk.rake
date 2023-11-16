@@ -29,13 +29,22 @@ namespace :snk do
           product.update_column(:stock, item["estoque_quantidade"].nil? ? nil : item["estoque_quantidade"].to_i)
           product.update_column(:price, item["preco_cheio"].to_f)
 
-          Product.stock_price_tray!(product)
+          result = Product.get_tray!(product)
+
+          if result[:status] == "OK" && product.active == "S"
+            Product.stock_price_tray!(product)
+          elsif result[:status] == "OK" && product.active != "S"
+            Product.delete_inactive_product(product.id_tray)
+          elsif result[:status] != "OK" && product.active == "S"
+            Product.create_tray!(product)
+          end
         end
       end
     rescue Exception => e
       puts "Erro ao atualizar Estoque e Preço do produto: #{e.message}"
       Rails.logger.info "Erro ao atualizar Estoque e Preço do produto: #{e.message}"
     end
+    
     puts "End snk:stock_price  - #{Time.now}"
   end
 end

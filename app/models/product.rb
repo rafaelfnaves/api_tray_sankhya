@@ -25,7 +25,9 @@ class Product < ApplicationRecord
 
         if product
           result = Product.get_tray!(product)
-          unless result[:status] == "OK"
+          if result[:status] == "OK"
+            Product.delete_inactive_product(product.id_tray) if product.active != "S"
+          else
             Product.create_tray!(product)
           end
         end
@@ -44,8 +46,17 @@ class Product < ApplicationRecord
         data.update_column(:length, product["comprimento_em_cm"].nil? ? nil : product["comprimento_em_cm"].to_i)
         data.update_column(:volume, product["codvol"])
 
-        result = Product.get_tray!(data)
-        Product.update_tray!(data) if result[:status] == "OK"
+        if data.active == "S"
+          result = Product.get_tray!(data)
+
+          if result[:status] == "OK"
+            Product.update_tray!(data)
+          else
+            Product.create_tray!(data)
+          end
+        else
+          Product.delete_inactive_product(data.id_tray)
+        end
       end
     end
   end
@@ -69,7 +80,7 @@ class Product < ApplicationRecord
       product.id_tray = hash["id"]
       product.save!
 
-      puts "Produto (SKU: #{product.sku}) Criado na Tray."
+      puts "[SUCCESS] Product SKU: #{product.sku}) Created on Tray."
     rescue Exception => e
       puts "Erro ao enviar produto (SKU: #{product.sku}) para a Tray: #{e.message}"
       Honeybadger.notify("Erro ao enviar produto (SKU: #{product.sku}) para a Tray: #{e.message}")
@@ -97,7 +108,6 @@ class Product < ApplicationRecord
       product.save!
 
       puts "Atualizado produto - id_tray: #{product.id_tray} | category: #{product.category}"
-      Rails.logger.info "[SUCCESS] get_tray!. id_tray: #{product.id_tray} | category: #{product.category}"
       
       { status: "OK" }
     end
@@ -119,7 +129,6 @@ class Product < ApplicationRecord
       
       if response.code == 200 || response.code == "200"
         puts "Produto ID_TRAY: #{product.id_tray} atualizado na Tray"
-        Rails.logger.info "[SUCCESS] update_tray! ID_TRAY: #{product.id_tray} | sku: #{product.sku}"
       else
         raise "Error update_tray: Response code was #{response.code} and body #{response.body}"
       end
@@ -150,7 +159,6 @@ class Product < ApplicationRecord
       response = https.request(request)
       if response.code == 200 || response.code == "200"
         puts "[SUCCESS] Update stock_price_tray. ID_TRAY: #{product.id_tray}"
-        Rails.logger.info "[SUCCESS] Update stock_price_tray. ID_TRAY: #{product.id_tray}"
       else
         raise "Error on Update stock_price_tray. ID_TRAY: #{product.id_tray} SKU: #{product.sku}. Response: #{response.code} - #{response.body}"
       end
@@ -209,5 +217,21 @@ class Product < ApplicationRecord
     end
   end
   
-  
+  def self.delete_inactive_product(id_tray)
+    sleep 1
+
+    begin
+      access_token = Auth.access_token!()
+      url = "#{ENV['API_ADDRESS']}/products/#{id_tray}?access_token=#{access_token}"
+      response = RestClient.delete url
+      if response.code == 200
+        puts "[SUCCESS] delete_inactive_product. id_tray: #{id_tray}"
+      else
+        raise "Response code: #{response.code} - id_tray: #{id_tray}"
+      end
+    rescue Exception => error
+      puts "[ERROR] delete_inactive_product. Error message: #{error.message}"
+      Rails.logger.info "[ERROR] delete_inactive_product. Error message: #{error.message}"
+    end
+  end
 end
