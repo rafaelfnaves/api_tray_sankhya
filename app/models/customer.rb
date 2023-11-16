@@ -78,7 +78,7 @@ class Customer < ApplicationRecord
         codparc = hash.dig('responseBody', 'entities', 'entity', 'f0', '$')
       end
 
-      self.create!(
+      Customer.create!(
         cnpj: customer['cnpj'],
         id_tray: customer['id'],
         name: customer['name'],
@@ -100,9 +100,7 @@ class Customer < ApplicationRecord
         state: customer['state'],
         code_par_snk: codparc
       )
-
     end
-    
   end
 
   def sign_up_snk(name, city, cpf)

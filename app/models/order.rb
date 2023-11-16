@@ -126,20 +126,25 @@ class Order < ApplicationRecord
          }
       }
 
-      response = RestClient::Request.execute(
-         method:  :post,
-         url: "#{ENV['URL_SNK_ORDER_POST']}&mgeSession=#{Auth.jsessionid!()}&outputType=json",
-         payload: body.to_json,
-         headers: { content_type: 'application/json' }
-      )
-
-      puts "Cadastro de cliente no SNK: Status #{response.code} - Body: #{response.body}"
-
-      if response.code == 200
+      begin
+         response = RestClient::Request.execute(
+            method:  :post,
+            url: "#{ENV['URL_SNK_ORDER_POST']}&mgeSession=#{Auth.jsessionid!()}&outputType=json",
+            payload: body.to_json,
+            headers: { content_type: 'application/json' }
+         )
+   
+         puts "Cadastro de cliente no SNK: Status #{response.code} - Body: #{response.body}"
+   
          res_body = JSON.parse(response.body)
-         codparc = res_body["responseBody"]["pk"]["NUNOTA"]["$"]
+         nu_nota = res_body.dig('responseBody', 'pk', 'NUNOTA', '$')
+         if nu_nota
+            nu_nota
+         else
+            raise "Response: #{res_body}"
+         end
+      rescue Exception => error
+         puts "[ERROR] Order create_snk (return NUNOTA). Error message: \n #{error.message}"
       end
-
-      codparc
    end
 end
