@@ -7,7 +7,7 @@ services:
       POSTGRES_PASSWORD: postgres
     volumes:
       - db_data:/var/lib/postgresql/data
-  
+
   app:
     env_file:
       - .env
@@ -51,33 +51,6 @@ services:
     volumes:
       - .:/app
       - gem_cache:/usr/local/bundle/gems
-
-  # app-products-task:
-  #   command: ./cron_products_task.sh
-  #   env_file:
-  #     - .env
-  #   depends_on:
-  #     - app
-  #   stdin_open: true
-  #   tty: true
-
-  # app-stock-task:
-  #   command: ./cron_stock_task.sh
-  #   env_file:
-  #     - .env
-  #   depends_on:
-  #     - app
-  #   stdin_open: true
-  #   tty: true
-
-  # app-orders-task:
-  #   command: ./cron_stock_task.sh
-  #   env_file:
-  #     - .env
-  #   depends_on:
-  #     - app
-  #   stdin_open: true
-  #   tty: true
 
 volumes:
   gem_cache:
