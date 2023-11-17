@@ -22,7 +22,7 @@ class Customer < ApplicationRecord
 
   private
 
-  def customer_snk(customer)
+  def self.customer_snk(customer)
 
     puts "Init Customer Model"
     puts "-------"
@@ -103,7 +103,7 @@ class Customer < ApplicationRecord
     end
   end
 
-  def sign_up_snk(name, city, cpf)
+  def self.sign_up_snk(name, city, cpf)
     puts "Entrou para cadastrar cliente no SNK"
 
     body = {  
