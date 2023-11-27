@@ -1,19 +1,22 @@
 version: "3"
 
 services:
-  db:
-    image: postgres:12.1
-    environment:
-      POSTGRES_PASSWORD: postgres
-    volumes:
-      - db_data:/var/lib/postgresql/data
+  web:
+    image: nginx
+    build:
+      context: .
+      dockerfile: ./docker/web/Dockerfile
+    depends_on:
+      - app
+    ports:
+      - 80:80
 
   app:
     env_file:
       - .env
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: ./docker/app/Dockerfile
       args:
         - RAILS_ENV=${RAILS_ENV}
         - RACK_ENV=${RACK_ENV}
@@ -44,13 +47,20 @@ services:
         - CODPARCTRANSP=${CODPARCTRANSP}
         - CODLOCALORIG=${CODLOCALORIG}
         - CODCENCUS=${CODCENCUS}
-    ports:
-      - 3000:3000
-    depends_on: 
+    depends_on:
       - db
     volumes:
       - .:/app
       - gem_cache:/usr/local/bundle/gems
+
+  db:
+    env_file:
+      - .env
+    image: postgres:12.1
+    environment:
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+    volumes:
+      - db_data:/var/lib/postgresql/data
 
 volumes:
   gem_cache:

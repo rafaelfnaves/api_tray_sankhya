@@ -1,4 +1,4 @@
-FROM ruby:3.1.2
+FROM --platform=linux/amd64 ruby:3.1.2
 
 # Set env variables
 ARG RAILS_ENV
@@ -102,10 +102,18 @@ WORKDIR $RAILS_ROOT
 COPY Gemfile Gemfile
 COPY Gemfile.lock Gemfile.lock
 RUN gem install bundler:2.3.7
-RUN bundle install
+RUN bundle install --deployment --without development test
 
 # Adding project files
 COPY . .
 
+# Set environment variables
+ENV RAILS_ENV=production
+ENV RAILS_LOG_TO_STDOUT=true
+
+# Run database creation and necessary migrations
+RUN bundle exec rails db:create db:migrate db:create_cities db:update_products
+
 EXPOSE 3000
+
 CMD ["bundle", "exec", "puma", "-C", "config/puma.rb"]

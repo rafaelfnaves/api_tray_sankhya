@@ -33,10 +33,4 @@ namespace :db do
     Rake::Task["snk:create_products"].invoke
     Rake::Task["db:weight_product"].invoke
   end
-
-  task setup: :environment do
-    Rake::Task["db:create_cities"].invoke
-    Rake::Task["snk:create_products"].invoke
-    Rake::Task["db:weight_product"].invoke
-  end
 end

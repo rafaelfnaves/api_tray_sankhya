@@ -1,4 +1,4 @@
-FROM ruby:3.1.2
+FROM --platform=linux/amd64 ruby:3.1.2
 
 # Set env variables
 ARG RAILS_ENV
@@ -108,4 +108,5 @@ RUN bundle install
 COPY . .
 
 EXPOSE 3000
+
 CMD ["bundle", "exec", "puma", "-C", "config/puma.rb"]
