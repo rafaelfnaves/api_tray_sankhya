@@ -1,29 +1,27 @@
 version: "3"
 
 services:
-  web:
-    image: nginx
-    build:
-      context: .
-      dockerfile: ./docker/web/Dockerfile
-    depends_on:
-      - app
-    ports:
-      - 80:80
+  db:
+    env_file:
+      - .env
+    image: postgres:12.1
+    environment:
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+    volumes:
+      - db_data:/var/lib/postgresql/data
 
   app:
     env_file:
       - .env
     build:
       context: .
-      dockerfile: ./docker/app/Dockerfile
+      dockerfile: ./Dockerfile
       args:
         - RAILS_ENV=${RAILS_ENV}
         - RACK_ENV=${RACK_ENV}
         - RAILS_SERVE_STATIC_FILES=${RAILS_SERVE_STATIC_FILES}
         - SECRET_KEY_BASE=${SECRET_KEY_BASE}
         - DATABASE_HOST=${DATABASE_HOST}
-        - DATABASE_NAME=${DATABASE_NAME}
         - DATABASE_PASSWORD=${DATABASE_PASSWORD}
         - DATABASE_PORT=${DATABASE_PORT}
         - DATABASE_USERNAME=${DATABASE_USERNAME}
@@ -49,18 +47,11 @@ services:
         - CODCENCUS=${CODCENCUS}
     depends_on:
       - db
+    ports:
+      - 3000:3000
     volumes:
       - .:/app
       - gem_cache:/usr/local/bundle/gems
-
-  db:
-    env_file:
-      - .env
-    image: postgres:12.1
-    environment:
-      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
-    volumes:
-      - db_data:/var/lib/postgresql/data
 
 volumes:
   gem_cache:
