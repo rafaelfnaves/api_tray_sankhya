@@ -1,8 +1,8 @@
 #!/bin/bash
 
 while true; do
-    rails db:update_products
+    rails tray:get_orders
 
     # Sleep for 1 hour (3600 seconds)
-    sleep 7200
+    sleep 600
 done

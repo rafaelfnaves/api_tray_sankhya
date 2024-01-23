@@ -3,12 +3,12 @@ Arask.setup do |arask|
 
   # Rake tasks with cron syntax
   #arask.create task: 'update:cache', cron: '*/5 * * * *' # Every 5 minutes
-  arask.create task: 'db:update_products', cron: '0 11,02 * * *' # At 11:00 and 02:00 every day (UTC)
+  arask.create task: 'db:update_products', interval: 2.hours
 
   # Scripts with interval (when time of day or month etc doesn't matter)
   #arask.create script: 'puts "IM ALIVE!"', interval: :daily
-  arask.create task: 'snk:stock_price', interval: 10.minutes
-  arask.create task: 'tray:get_orders', interval: 5.minutes
+  arask.create task: 'snk:stock_price', interval: 15.minutes
+  arask.create task: 'tray:get_orders', interval: 10.minutes
 
   # Run an ActiveJob.
   #arask.create job: 'ImportCurrenciesJob', interval: 1.month
