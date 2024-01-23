@@ -6,7 +6,7 @@ class Product < ApplicationRecord
     products.each do |product|      
       data = Product.find_by_sku(product["sku"])
       if data.nil?
-        product = self.create!(
+        product = self.new(
           sku: product["sku"], 
           active: product["ativo"], 
           price: product["preco_cheio"].to_f,
@@ -14,37 +14,38 @@ class Product < ApplicationRecord
           ncm: product["ncm"],
           name: product["nome"],
           description: product["descricao_completa"],
-          stock: product["estoque_quantidade"].nil? ? nil : product["estoque_quantidade"].to_i,
+          stock: product["estoque_quantidade"].blank? ? nil : product["estoque_quantidade"].to_i,
           brand: product["marca"],
-          weight: product["peso_em_kg"].nil? || product["peso_em_kg"] == 0 || product["peso_em_kg"] == "0" || product["peso_em_kg"].blank? ? 1 : product["peso_em_kg"].to_i,
+          weight: [0, '0', '', nil].include?(product["peso_em_kg"]) ? 1 : product["peso_em_kg"].to_i,
+          height: product["altura_em_cm"].blank? ? nil : product["altura_em_cm"].to_i,
+          width: product["largura_em_cm"].blank? ? nil : product["largura_em_cm"].to_i,
+          length: product["comprimento_em_cm"].blank? ? nil : product["comprimento_em_cm"].to_i,
+          volume: product["codvol"]
+        )
+
+        result = Product.get_tray!(product)
+        if result[:status] == "OK" && product.active != "S"
+          Product.delete_inactive_product(product.id_tray)
+        elsif result[:status] != "OK" && product.active == "S"
+          product.save!
+          Product.create_tray!(product)
+        end
+      else
+        data.update(
+          active: product["ativo"],
+          price: product["preco_cheio"].to_f,
+          cost: product["preco_custo"].to_f,
+          ncm: product["ncm"],
+          name: product["nome"],
+          description: product["descricao_completa"],
+          stock: product["estoque_quantidade"].blank? ? nil : product["estoque_quantidade"].to_i,
+          brand: product["marca"],
+          weight: [0, '0', '', nil].include?(product["peso_em_kg"]) ? 1 : product["peso_em_kg"].to_i,
           height: product["altura_em_cm"].nil? ? nil : product["altura_em_cm"].to_i,
           width: product["largura_em_cm"].nil? ? nil : product["largura_em_cm"].to_i,
           length: product["comprimento_em_cm"].nil? ? nil : product["comprimento_em_cm"].to_i,
           volume: product["codvol"]
         )
-
-        if product
-          result = Product.get_tray!(product)
-          if result[:status] == "OK"
-            Product.delete_inactive_product(product.id_tray) if product.active != "S"
-          else
-            Product.create_tray!(product)
-          end
-        end
-      else
-        data.update_column(:active, product["ativo"])
-        data.update_column(:price, product["preco_cheio"].to_f)
-        data.update_column(:cost, product["preco_custo"].to_f)
-        data.update_column(:ncm, product["ncm"])
-        data.update_column(:name, product["nome"])
-        data.update_column(:description, product["descricao_completa"])
-        data.update_column(:stock, product["estoque_quantidade"].nil? ? nil : product["estoque_quantidade"].to_i)
-        data.update_column(:brand, product["marca"])
-        data.update_column(:weight, product["peso_em_kg"].nil? || product["peso_em_kg"] == 0 || product["peso_em_kg"] == "0" || product["peso_em_kg"].blank? ? 1 : product["peso_em_kg"].to_i)
-        data.update_column(:height, product["altura_em_cm"].nil? ? nil : product["altura_em_cm"].to_i)
-        data.update_column(:width, product["largura_em_cm"].nil? ? nil : product["largura_em_cm"].to_i)
-        data.update_column(:length, product["comprimento_em_cm"].nil? ? nil : product["comprimento_em_cm"].to_i)
-        data.update_column(:volume, product["codvol"])
 
         if data.active == "S"
           result = Product.get_tray!(data)
@@ -56,14 +57,15 @@ class Product < ApplicationRecord
           end
         else
           Product.delete_inactive_product(data.id_tray)
+          data.destroy
         end
       end
+
+      sleep 1
     end
   end
 
   def self.create_tray!(product)
-    sleep 2
-    
     begin
       access_token = Auth.access_token!()
       
@@ -80,7 +82,7 @@ class Product < ApplicationRecord
       product.id_tray = hash["id"]
       product.save!
 
-      puts "[SUCCESS] Product SKU: #{product.sku}) Created on Tray."
+      puts "[SUCCESS] Product SKU: #{product.sku} Created on Tray."
     rescue Exception => e
       puts "Erro ao enviar produto (SKU: #{product.sku}) para a Tray: #{e.message}"
       Honeybadger.notify("Erro ao enviar produto (SKU: #{product.sku}) para a Tray: #{e.message}")
@@ -103,20 +105,16 @@ class Product < ApplicationRecord
       { status: "not found" }
     else
       hash_product = hash.dig('Products', 0, 'Product')
-      product.id_tray = hash_product['id']
-      product.category = hash_product['category_id']
-      product.save!
+      product.update(id_tray: hash_product['id'], category: hash_product['category_id'])
 
       puts "Atualizado produto - id_tray: #{product.id_tray} | category: #{product.category}"
-      
+
       { status: "OK" }
     end
   end
   
 
   def self.update_tray!(product)
-    sleep 1
-
     begin
       access_token = Auth.access_token!()
       url = URI("#{ENV['API_ADDRESS']}/products/#{product.id_tray}?access_token=#{access_token}")
@@ -139,32 +137,25 @@ class Product < ApplicationRecord
   end
   
 
-  def self.stock_price_tray!(product)
-    sleep 1
-
+  def self.stock_price_tray!(id_tray, price, stock)
     access_token = Auth.access_token!()
-    url = URI("#{ENV['API_ADDRESS']}/products/#{product.id_tray}?access_token=#{access_token}")
+    url = URI("#{ENV['API_ADDRESS']}/products/#{id_tray}?access_token=#{access_token}")
     https = Net::HTTP.new(url.host, url.port)
     https.use_ssl = true
     request = Net::HTTP::Put.new(url)
     request["Content-Type"] = "application/json"
     request.body = JSON.dump({
       "Product": {
-        "price": product.price,
-        "stock": product.stock,
+        "price": price,
+        "stock": stock
       }
     })
 
-    begin
-      response = https.request(request)
-      if response.code == 200 || response.code == "200"
-        puts "[SUCCESS] Update stock_price_tray. ID_TRAY: #{product.id_tray}"
-      else
-        raise "Error on Update stock_price_tray. ID_TRAY: #{product.id_tray} SKU: #{product.sku}. Response: #{response.code} - #{response.body}"
-      end
-    rescue Exception => e
-      puts "[ERROR] #{e.message}"
-      Rails.logger.info "[ERROR] #{e.message}"
+    response = https.request(request)
+    if response.code == 200 || response.code == "200"
+      puts "[SUCCESS] Update stock_price_tray. ID_TRAY: #{id_tray}"
+    else
+      raise "Error on Update stock_price_tray. ID_TRAY: #{id_tray}. Response: #{response.code} - #{response.body}"
     end
   end
   
@@ -181,12 +172,17 @@ class Product < ApplicationRecord
         "brand": product.brand,
         "stock": product.stock,
         "category_id": product.category.nil? ? "35" : product.category,
+        "description": product.description,
+        "weight": product.weight,
+        "height": product.height,
+        "width": product.width,
+        "length": product.length,
         "available": product.active == "S" ? 1 : 0
       }
     })
   end
 
-  def self.view_snk!(view_name, jsessionid)
+  def self.view_snk!(view_name)
     url = ENV["VIEW_URL_SNK"]
     body = "
       <serviceRequest serviceName='CRUDServiceProvider.loadView'> <requestBody>
@@ -200,7 +196,7 @@ class Product < ApplicationRecord
         method:  :post,
         url: url,
         payload: body,
-        headers: { content_type: 'text/xml;charset=ISO-8859-1', cookie: "JSESSIONID=#{jsessionid}"}
+        headers: { content_type: 'text/xml;charset=ISO-8859-1', cookie: "JSESSIONID=#{Auth.jsessionid!()}"}
       )
 
       hash = Hash.from_xml(response.body)
@@ -212,8 +208,6 @@ class Product < ApplicationRecord
   end
   
   def self.delete_inactive_product(id_tray)
-    sleep 1
-
     begin
       access_token = Auth.access_token!()
       url = "#{ENV['API_ADDRESS']}/products/#{id_tray}?access_token=#{access_token}"
