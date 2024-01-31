@@ -28,13 +28,9 @@ namespace :tray do
           i.save!
 
           puts "Atualizado produto - id_tray: #{i.id_tray} | category: #{i.category}"
-
-          Rails.logger.info "Task tray:get_products ok. id_tray: #{i.id_tray} | category: #{i.category}"
         rescue Exception => e
           puts "Erro ao consultar produto id: #{i.id} - ERROR #{e.message}"
           Honeybadger.notify("Erro ao consultar produto id: #{i.id} - ERROR #{e.message}")
-
-          Rails.logger.info "Task tray:get_products error. id_tray: #{i.id_tray} | category: #{i.category}"
         end
       end
     end
@@ -45,40 +41,9 @@ namespace :tray do
     Rake::Task["tray:create_products"].invoke
   end
 
-  desc "Deleta os produtos informados na Tray"
-  task delete_products: :environment do
-    xls = Roo::Spreadsheet.open("#{Rails.root}/inativos.xls")
-    skus = xls.column(2)
-    skus.delete_at(0)
-    
-    token = Auth.access_token!()
-
-    count = 0
-
-    skus.each do |i|
-      product = Product.find_by_sku(i.to_i.to_s)
-      unless product.nil? || product.id_tray.nil? #verificar antes o id_tray
-        url = "#{ENV['API_ADDRESS']}/products/#{product.id_tray}/?access_token=#{token}"
-        
-        # binding.pry
-        begin
-          response = RestClient.delete url
-          puts response.body
-          
-          product.destroy
-        rescue Exception => e
-          puts "Erro ao fazer requisição: #{url}"
-        end
-
-      end
-      count += 1
-      puts count
-    end
-  end
-
   desc "Get orders on tray"
   task get_orders: :environment do
-    puts "Start task tray:get_orders"
+    puts "Start task tray:get_orders #{Time.now}"
 
     begin
       today = Date.today.to_s
@@ -108,10 +73,9 @@ namespace :tray do
     rescue Exception => error
       puts "Error task for consult today orders on tray. Time: #{Time.now}, Error: #{error.message}"
       Honeybadger.notify("Error task for consult today orders on tray. Time: #{Time.now}, Error: #{error.message}")
-      Rails.logger.info "Error task for consult today orders on tray. Time: #{Time.now}, Error: #{error.message}"
     end
 
-    puts "End task tray:get_orders"
+    puts "End task tray:get_orders #{Time.now}"
   end
 end
 

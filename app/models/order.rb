@@ -2,18 +2,15 @@ class Order < ApplicationRecord
    belongs_to :customer
 
    def self.get_order!(id_tray)
-      Rails.logger.info "Entrou get_order"
       
       id = Order.find_by_id_tray(id_tray)
       
       if id.nil?
          token = Auth.access_token!()
          url = "#{ENV['API_ADDRESS']}/orders/#{id_tray}/complete?access_token=#{token}"
-         Rails.logger.info "URL: #{url}"
          response = RestClient.get url
          hash = JSON.parse(response.body)
 
-         Rails.logger.info "Response: #{response.code} - #{response.body}"
 
          order = hash["Order"]
          if order["has_payment"] == "1"

@@ -10,7 +10,6 @@ namespace :snk do
       puts "Erro ao salvar produtos: #{e.message}"
     end
 
-    Rails.logger.info "Task snk:create_products done."
     puts "snk:create_products\n
           start at #{start_time}\n
           Finish at #{Time.now}"
@@ -24,7 +23,6 @@ namespace :snk do
       products = Product.view_snk!("VGFESTPRICE")
     rescue Exception => e
       puts "[ERROR] Consultar view de stock e preco #{e.message}"
-      Rails.logger.info "[ERROR] Consultar view de stock e preco #{e.message}"
     end
 
     active_products = products.select{ |i| i["ativo"] == "S" }
@@ -40,7 +38,6 @@ namespace :snk do
           Product.stock_price_tray!(product.id_tray, product.price, product.stock)
         rescue Exception => e
           puts "[ERROR stock_price_tray] Product: #{product.id} -> #{e.message}"
-          Rails.logger.info "[ERROR stock_price_tray] Product: #{product.id} -> #{e.message}"
         end
       end
     end

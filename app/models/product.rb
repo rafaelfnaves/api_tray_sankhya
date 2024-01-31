@@ -1,5 +1,4 @@
 class Product < ApplicationRecord
-  validates_uniqueness_of :sku, on: :create, message: "SKU já existe."
 
   def self.save_product!(products)
     
@@ -96,7 +95,6 @@ class Product < ApplicationRecord
       response = RestClient.get url, {params: {'reference' => product.sku.to_s}}
     rescue Exception => e
       puts "Erro ao consultar produto SKU: #{product.sku} - ERROR #{e.message}"
-      Rails.logger.info "[ERROR] Product.get_tray!. product id: #{id}"
     end
 
     hash = JSON.parse(response.body)
@@ -132,7 +130,6 @@ class Product < ApplicationRecord
       end
     rescue Exception => e
       puts "[ERROR] update_tray! ID_TRAY: #{product.id_tray}. Error message: #{e.message}"
-      Rails.logger.info "[ERROR] #{e.message}"
     end
   end
   
@@ -203,7 +200,6 @@ class Product < ApplicationRecord
       hash.dig('serviceResponse', 'responseBody', 'records', 'record')
     rescue Exception => e
       puts "[ERROR] view_snk. Error message: #{e.message}"
-      Rails.logger.info "[ERROR] view_snk. Error message: #{e.message}"
     end
   end
   
@@ -219,7 +215,6 @@ class Product < ApplicationRecord
       end
     rescue Exception => error
       puts "[ERROR] delete_inactive_product. Error message: #{error.message}"
-      Rails.logger.info "[ERROR] delete_inactive_product. Error message: #{error.message}"
     end
   end
 end
