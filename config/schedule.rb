@@ -1,4 +1,4 @@
-set :output, '/var/log/cron.log' # log location
+set :output, 'log/cron.log' # log location
 
 every 2.hours do
   rake "db:update_products"
