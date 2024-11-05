@@ -1,0 +1,10 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    ports:
+      - 15432:5432
+    environment:
+      POSTGRES_DB: api_tray_sankhya_development
+      POSTGRES_HOST_AUTH_METHOD: trust
+      # 'POSTGRES_HOST_AUTH_METHOD' define o método de autenticação.
+      # 'trust' significa que não é necessária senha para conectar ao banco de dados. Isso não é recomendado para ambientes de produção por razões de segurança.
