@@ -6,7 +6,7 @@ module ProductActions
       @params = params
     end
 
-    def call
+    def perform
       result = Product.get_tray!(product)
       if result[:status] == 'OK' && product.active != 'S'
         delete_inactive_product

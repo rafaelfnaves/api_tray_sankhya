@@ -7,7 +7,7 @@ module ProductActions
       @params = params
     end
 
-    def call
+    def perform
       update_product
 
       product.active == 'S' ? update_or_create_at_tray : delete_product

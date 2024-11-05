@@ -3,7 +3,7 @@ class ProductService
     products.each do |product|
       data = Product.find_by_sku(product["sku"])
 
-      data.nil? ? ProductActions::Create.new(product).call : ProductActions::UpdateOrDelete.new(data, product).call
+      data.nil? ? ProductActions::Create.new(product).perform : ProductActions::UpdateOrDelete.new(data, product).perform
 
       sleep 1
     end
