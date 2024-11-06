@@ -30,7 +30,7 @@ module TrayServices
 
       puts "Atualizado produto - id_tray: #{product.id_tray} | category: #{product.category}"
 
-      { status: "OK" }
+      { status: 'OK' }
     end
   end
 end
