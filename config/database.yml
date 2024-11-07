@@ -1,24 +1,22 @@
 default: &default
   adapter: postgresql
   encoding: unicode
-  port: <%= ENV["DATABASE_PORT"] %>
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
-  username: rafaelnaves
-  password:
 
 development:
   <<: *default
+  username: <%= ENV["DATABASE_USERNAME"] %>
+  password: <%= ENV["DATABASE_PASSWORD"] %>
   database: api_tray_sankhya_development
+  port: <%= ENV["DATABASE_PORT"] %>
 
 test:
   <<: *default
-  database: api_tray_sankhya_test
-
-production:
-  adapter: postgresql
-  encoding: unicode
   username: <%= ENV["DATABASE_USERNAME"] %>
   password: <%= ENV["DATABASE_PASSWORD"] %>
+  database: api_tray_sankhya_test
   port: <%= ENV["DATABASE_PORT"] %>
-  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
-  database: api_tray_sankhya_production
+
+production:
+  <<: *default
+  url: <%= ENV['DATABASE_URL'] %>
